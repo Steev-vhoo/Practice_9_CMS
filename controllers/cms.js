@@ -1,12 +1,14 @@
 import { UserModel } from "../models/cms.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken"
+
 
 
 
 export const newUser = async (req, res, next) => {
     try {
         //Registering new user
-        const { username, email, password } = req.body;
+        const { username, email, displayName,  password } = req.body;
         // Checking all the missing fields
         if (!username || !email || !password)
             return res.status(400)
@@ -28,7 +30,7 @@ export const newUser = async (req, res, next) => {
 
         //Password validation
         if (password.length <= 6) return res
-            .staus(400)
+            .status(400)
             .json({ error: `Password must be at least 6 characters long` })
         try {
 
@@ -73,9 +75,13 @@ export const existingUser = async (req, res, next) => {
         //If user actually exist
     const doesPasswordMatch = await bcrypt.compare(password, doesUserExist.password);
 
-    if (!doesPasswordMatch) return res.status(400).json()
+    if (!doesPasswordMatch) return res.status(400).json({ error: `Invalid email or password`})
+
+    const payload = { _id: doesPasswordMatch._id};
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {expiresIn: 3600})
+    return res.status(200).json({token})
         } catch (error) {
-            
+          console.log(err)
         }
 
 
